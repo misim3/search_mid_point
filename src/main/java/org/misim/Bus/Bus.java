@@ -591,6 +591,7 @@ public class Bus {
     }
 
 
+
     private static void printGraph(Graph graph) {
         System.out.println("저장된 데이터 전체 목록");
 
