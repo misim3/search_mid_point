@@ -6,15 +6,16 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.*;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.List;
 
 class City {
     int cityId;
-    String cityName;
 
     public City(int cityId) {
         this.cityId = cityId;
@@ -31,14 +32,14 @@ class BusStop {
 
     double longitude;
 
-    List<Route> adj;
+    Map<String, Route> adj;
 
     public BusStop(String nodeId, int cityCode, double latitude, double longitude) {
         this.nodeId = nodeId;
         this.cityCode = cityCode;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.adj = new ArrayList<>();
+        this.adj = new HashMap<>();
     }
 }
 
@@ -49,6 +50,10 @@ class Route {
     String nodeOrd;
 
     String routeId;
+
+    public Route (String routeId) {
+        this.routeId = routeId;
+    }
 
     public Route(String nodeId, String routeId) {
         this.nodeId = nodeId;
@@ -167,24 +172,31 @@ public class Bus {
         Graph graph = new Graph();
 
         // 전체 도시 코드 추출
-        StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusRouteInfoInqireService/getCtyCodeList"); /*URL*/
-        urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
-        urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
+        //StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusRouteInfoInqireService/getCtyCodeList"); /*URL*/
+        //urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
+        //urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
 
-        InputStream xmlStream = getXMLStream(urlBuilder.toString());
+        //InputStream xmlStream = getXMLStream(urlBuilder.toString());
 
-        parseXMLCityCode(xmlStream, graph);
+        //parseXMLCityCode(xmlStream, graph);
+
+        City city = new City(23);
+        graph.cities.put(23, city);
+
         System.out.println("CityCode done!");
 
-        // 도시 코드로 도시별 전체 버스 정류장 정보 추출
+        // 도시 코드로 도시별 전체 버스 정류장 목록 정보 추출
+
+        StringBuilder urlBuilder;
+        InputStream xmlStream;
 
         Map<Integer, City> a = graph.cities;
 
         for (Map.Entry<Integer, City> entry : a.entrySet()) {
             urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getSttnNoList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
-            // urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            // urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
+            urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+            urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
             urlBuilder.append("&" + URLEncoder.encode("cityCode","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getKey()), "UTF-8")); /*도시코드*/
             // urlBuilder.append("&" + URLEncoder.encode("nodeNm","UTF-8") + "=" + URLEncoder.encode("전통시장", "UTF-8")); /*정류소명*/
@@ -197,13 +209,13 @@ public class Bus {
 
         System.out.println("BusStopList done!");
 
-        // 버스 노선 정보 추출
+        // 버스 노선 목록 정보 추출
 
         for (Map.Entry<Integer, City> entry : a.entrySet()) {
             urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusRouteInfoInqireService/getRouteNoList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
-            // urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            // urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
+            urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+            urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
             urlBuilder.append("&" + URLEncoder.encode("cityCode","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getKey()), "UTF-8")); /*도시코드*/
             // urlBuilder.append("&" + URLEncoder.encode("nodeNm","UTF-8") + "=" + URLEncoder.encode("전통시장", "UTF-8")); /*정류소명*/
@@ -216,26 +228,6 @@ public class Bus {
 
         System.out.println("RouteList done!");
 
-        // 버스 노선이 경유하는 버스 정류장 정리
-
-        Map<String, RouteList> c = graph.routes;
-
-        for (Map.Entry<String, RouteList> entry : c.entrySet()) {
-            urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusRouteInfoInqireService/getRouteAcctoThrghSttnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
-            // urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            // urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
-            urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
-            urlBuilder.append("&" + URLEncoder.encode("cityCode","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getValue().cityCode), "UTF-8")); /*도시코드 [상세기능4. 도시코드 목록 조회]에서 조회 가능*/
-            urlBuilder.append("&" + URLEncoder.encode("routeId","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getKey()), "UTF-8")); /*정류소ID*/
-
-            xmlStream = getXMLStream(urlBuilder.toString());
-
-            parseXMLBusRouteStop(xmlStream, entry.getKey(), graph);
-        }
-
-        System.out.println("BusStopRoute done!");
-
         // 버스 정류장 정보에 인접한 정류장 정보 추가
 
         Map<String, BusStop> b = graph.busStops;
@@ -243,8 +235,8 @@ public class Bus {
         for (Map.Entry<String, BusStop> entry : b.entrySet()) {
             urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusSttnInfoInqireService/getSttnThrghRouteList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
-            // urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            // urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
+            urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+            urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
             urlBuilder.append("&" + URLEncoder.encode("cityCode","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getValue().cityCode), "UTF-8")); /*도시코드 [상세기능4. 도시코드 목록 조회]에서 조회 가능*/
             urlBuilder.append("&" + URLEncoder.encode("routeId","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getKey()), "UTF-8")); /*정류소ID*/
@@ -255,6 +247,32 @@ public class Bus {
         }
 
         System.out.println("BusStopRoute done!");
+
+        // 버스 노선이 경유하는 버스 정류장 정리
+
+        Map<String, RouteList> c = graph.routes;
+
+        List<String> needRoutes = graph.busStops.get("ICB164000386").adj.keySet().stream().toList();
+        needRoutes.addAll(graph.busStops.get("ICB164000395").adj.keySet().stream().toList());
+
+        for (Map.Entry<String, RouteList> entry : c.entrySet()) {
+            if (needRoutes.contains(entry.getKey())) {
+                urlBuilder = new StringBuilder("http://apis.data.go.kr/1613000/BusRouteInfoInqireService/getRouteAcctoThrghSttnList"); /*URL*/
+                urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=snY%2FE%2Fh1clc%2FQvfB6XfZVOMyJfyzGVBzOy%2Bs4F0UCeVuXqvBB1zu8Spjz2%2FF%2F%2BBSa8oxXfpYQ%2BQYvyDX1jwZ0w%3D%3D"); /*Service Key*/
+                urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+                urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*한 페이지 결과 수*/
+                urlBuilder.append("&" + URLEncoder.encode("_type","UTF-8") + "=" + URLEncoder.encode("xml", "UTF-8")); /*데이터 타입(xml, json)*/
+                urlBuilder.append("&" + URLEncoder.encode("cityCode","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getValue().cityCode), "UTF-8")); /*도시코드 [상세기능4. 도시코드 목록 조회]에서 조회 가능*/
+                urlBuilder.append("&" + URLEncoder.encode("routeId","UTF-8") + "=" + URLEncoder.encode(String.valueOf(entry.getKey()), "UTF-8")); /*노선ID*/
+
+                xmlStream = getXMLStream(urlBuilder.toString());
+
+                parseXMLBusRouteStop(xmlStream, entry.getKey(), graph);
+            }
+        }
+
+        System.out.println("BusRouteStop done!");
+
 
         return graph;
     }
@@ -347,7 +365,10 @@ public class Bus {
                 // 필요한 정보 추출
                 String routeid = item.getElementsByTagName("routeid").item(0).getTextContent();
 
-                findOrCreateBusStopRoute(nodeId, routeid, graph);
+                // findOrCreateBusStopRoute(nodeId, routeid, graph);
+
+                Route route = new Route(nodeId, routeid);
+                graph.busStops.get(nodeId).adj.put(routeid, route);
             }
         }
     }
@@ -397,11 +418,11 @@ public class Bus {
                         for (Map.Entry<String, Route> entry : a.entrySet()) {
                             if (Integer.parseInt(entry.getValue().nodeOrd) - 1 == Integer.parseInt(index)) {
                                 route = new Route(entry.getValue().nodeId, routeid);
-                                graph.busStops.get(nodeId).adj.add(route);
+                                //graph.busStops.get(nodeId).adj.add(route);
                             }
                             if (Integer.parseInt(entry.getValue().nodeOrd) + 1 == Integer.parseInt(index)) {
                                 route = new Route(entry.getValue().nodeId, routeid);
-                                graph.busStops.get(nodeId).adj.add(route);
+                                //graph.busStops.get(nodeId).adj.add(route);
                             }
                         }
                     }
@@ -506,37 +527,40 @@ public class Bus {
 
             if (graph.busStops.get(currentNodeId) != null && graph.busStops.get(currentNodeId).adj != null) {
                 System.out.println("1단계");
-                for (Route nextRoute : graph.busStops.get(currentNodeId).adj) {
+                for (Route nextRoute : graph.busStops.get(currentNodeId).adj.values()) {
                     double endTime; // 버스 이동 속도에 따라 적절히 조정되어야 함
-                    String nextStopId = nextRoute.nodeId;
                     String nextRouteId = nextRoute.routeId;
-
-                    if (previousRouteId != null) {
-                        if (nextRouteId.equals(previousRouteId)) {
-                            endTime = startTime + (60);
-                        } else {
-                            endTime = startTime + 60 * 4;
-                        }
-                    } else {
-                        endTime = startTime + 60;
-                    }
-
-                    if (endTime < timeLimit && !visitedStops.contains(nextStopId)) {
-                        System.out.println("2단계");
-                        if (solution.containsKey(nextStopId)) {
-                            if (solution.get(nextStopId) > endTime) {
-                                solution.put(nextStopId, endTime);
+                    String currentNodeOrder = graph.routes.get(nextRouteId).routes.get(currentNodeId).nodeOrd;
+                    for (Route nextStopId : graph.routes.get(nextRouteId).routes.values()) {
+                        if (Integer.parseInt(nextStopId.nodeOrd) + 1 == Integer.parseInt(currentNodeOrder) || Integer.parseInt(nextStopId.nodeOrd) - 1 == Integer.parseInt(currentNodeOrder)) {
+                            if (previousRouteId != null) {
+                                if (nextRouteId.equals(previousRouteId)) {
+                                    endTime = startTime + (60);
+                                } else {
+                                    endTime = startTime + 60 * 4;
+                                }
+                            } else {
+                                endTime = startTime + 60;
                             }
-                        } else {
-                            solution.put(nextStopId, endTime);
+
+                            if (endTime < timeLimit && !visitedStops.contains(nextStopId.nodeId)) {
+                                System.out.println("2단계");
+                                if (solution.containsKey(nextStopId.nodeId)) {
+                                    if (solution.get(nextStopId.nodeId) > endTime) {
+                                        solution.put(nextStopId.nodeId, endTime);
+                                    }
+                                } else {
+                                    solution.put(nextStopId.nodeId, endTime);
+                                }
+
+                                // 도착할 수 있는 정류장 추가
+                                reachableStops.add(nextStopId.nodeId);
+
+                                ndq = new NodeQ(nextStopId.nodeId, solution.get(nextStopId.nodeId), nextRoute.routeId);
+                                currentQueue.add(ndq);
+                                visitedStops.add(nextStopId.nodeId);
+                            }
                         }
-
-                        // 도착할 수 있는 정류장 추가
-                        reachableStops.add(nextStopId);
-
-                        ndq = new NodeQ(nextStopId, solution.get(nextStopId), nextRoute.routeId);
-                        currentQueue.add(ndq);
-                        visitedStops.add(nextStopId);
                     }
                 }
             }
